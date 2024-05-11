@@ -1,24 +1,52 @@
-const mysql = require("mysql");
+const express = require("express");
+const con = require("./config");
+const app = express();
 
-const con = mysql.createConnection({
-  host: "127.0.0.1",
-  user: "root",
-  password: "",
-  database: "lms2",
+app.use(express.json());
+
+app.get("/", (req, resp) => {
+  con.query("select * from student", (err, result) => {
+    if (err) {
+      resp.send("error in api");
+    } else {
+      resp.send(result);
+    }
+  });
 });
 
-con.connect((err) => {
-  if (err) {
-    console.warn("not connect");
-  } else {
-    console.warn("connected!!!");
-  }
+app.post("/", (req, resp) => {
+  const data = req.body;
+  con.query("INSERT INTO student SET ?", data, (error, results, fields) => {
+    if (error) throw error;
+    resp.send(results);
+  });
 });
 
-con.query("select * from student", (err, result) => {
-  if (err) {
-    console.warn("some error");
-  } else {
-    console.warn(result, "dd");
-  }
+app.put("/:roll", (req, resp) => {
+  const data = [
+    req.body.firstname,
+    req.body.lastname,
+    req.body.username,
+    req.body.roll,
+    req.params.roll,
+  ];
+  con.query(
+    "UPDATE student SET firstname = ?, lastname = ?, username = ?, roll = ? WHERE roll = ?",
+    data,
+    (error, results, fields) => {
+      if (error) throw error;
+      resp.send(results);
+    }
+  );
 });
+
+app.delete("/:roll", (req, resp) => {
+  con.query(
+    "DELETE FROM student WHERE roll=" + req.params.roll,
+    (error, results) => {
+      if (error) throw error;
+      resp.send(results);
+    }
+  );
+});
+app.listen(5173);
